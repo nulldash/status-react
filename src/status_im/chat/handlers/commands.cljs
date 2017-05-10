@@ -14,7 +14,7 @@
          [_ {{:keys [command params content-command type]} :content
              :keys [message-id chat-id on-requested jail-id] :as message} data-type]]
       (let [jail-id (or jail-id chat-id)]
-        (if-not (get-in contacts [jail-id :commands-loaded])
+        (if-not (get-in contacts [jail-id :commands-loaded?])
           (do (dispatch [:add-commands-loading-callback
                          jail-id
                          #(dispatch [:request-command-data message data-type])])

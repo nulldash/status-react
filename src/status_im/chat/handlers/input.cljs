@@ -25,8 +25,8 @@
               text-splitted  (input-model/split-command-args text)
               new-args       (rest text-splitted)
               new-input-text (input-model/make-input-text text-splitted old-args)]
-          (assoc-in db [:chats chat-id :input-text] new-input-text))
-        (assoc-in db [:chats chat-id :input-text] text)))))
+          (assoc-in db [:chats chat-id :input-text] new-input-text)))
+      (assoc-in db [:chats chat-id :input-text] text))))
 
 (handlers/register-handler
   :add-to-chat-input-text
@@ -65,7 +65,7 @@
 (handlers/register-handler
   :set-command-argument
   (handlers/side-effect!
-    (fn [{:keys [current-chat-id] :as db} [_ [index arg]]]
+    (fn [{:keys [current-chat-id] :as db} [_ [index arg move-to-next?]]]
       (let [command     (-> (get-in db [:chats current-chat-id :input-text])
                             (input-model/split-command-args))
             seq-params? (-> (input-model/selected-chat-command db current-chat-id)
@@ -80,7 +80,9 @@
             (dispatch [:set-chat-input-text (str command-name
                                                  const/spacing-char
                                                  (input-model/join-command-args command-args)
-                                                 const/spacing-char)])))))))
+                                                 (when (and move-to-next?
+                                                            (= index (dec (count command-args))))
+                                                   const/spacing-char))])))))))
 
 (handlers/register-handler
   :chat-input-focus
@@ -100,23 +102,23 @@
           requests        (->> (suggestions/get-request-suggestions db chat-text)
                                (remove (fn [{:keys [type]}]
                                          (= type :grant-permissions))))
-          suggestions     (suggestions/get-command-suggestions db chat-text)
+          commands        (suggestions/get-command-suggestions db chat-text)
           global-commands (suggestions/get-global-command-suggestions db chat-text)
           {:keys [dapp?]} (get-in db [:contacts chat-id])]
-      (when (and dapp? (every? empty? [requests suggestions]))
+      (when (and dapp? (every? empty? [requests commands]))
         (dispatch [::check-dapp-suggestions chat-id chat-text]))
       (-> db
           (assoc-in [:chats chat-id :request-suggestions] requests)
-          (assoc-in [:chats chat-id :command-suggestions] (into suggestions global-commands))))))
+          (assoc-in [:chats chat-id :command-suggestions] (into global-commands commands))))))
 
 (handlers/register-handler
   :load-chat-parameter-box
   (handlers/side-effect!
-    (fn [{:keys [current-chat-id] :as db} [_ {:keys [name type bot] :as command}]]
+    (fn [{:keys [current-chat-id bot-db] :as db} [_ {:keys [name type bot owner-id] :as command}]]
       (let [parameter-index (input-model/argument-position db current-chat-id)]
         (when (and command (> parameter-index -1))
-          (let [jail-id (or bot current-chat-id)
-                data    (get-in db [:local-storage current-chat-id])
+          (let [data    (get-in db [:local-storage current-chat-id])
+                bot-db  (get bot-db (or bot current-chat-id))
                 path    [(if (= :command type) :commands :responses)
                          name
                          :params
@@ -125,10 +127,11 @@
                 args    (-> (get-in db [:chats current-chat-id :input-text])
                             (input-model/split-command-args)
                             (rest))
-                params  {:parameters {:args args}
+                params  {:parameters {:args   args
+                                      :bot-db bot-db}
                          :context    (merge {:data data}
                                             (input-model/command-dependent-context-params command))}]
-            (status/call-jail jail-id
+            (status/call-jail (or bot owner-id current-chat-id)
                               path
                               params
                               #(dispatch [:received-bot-response
@@ -229,15 +232,20 @@
 (handlers/register-handler
   ::request-command-data
   (handlers/side-effect!
-    (fn [{:keys [contacts] :as db}
-         [_ {{:keys [command metadata args] :as c} :command
-             :keys                                 [message-id chat-id jail-id data-type after]}]]
+    (fn [{:keys [contacts bot-db] :as db}
+         [_ {{:keys [command
+                     metadata
+                     args]
+              :as   c} :command
+             :keys     [message-id chat-id jail-id data-type after]}]]
       (let [{:keys [dapp? dapp-url name]} (get contacts chat-id)
             message-id      (random/id)
             metadata        (merge metadata
                                    (when dapp?
                                      {:url  (i18n/get-contact-translated chat-id :dapp-url dapp-url)
                                       :name (i18n/get-contact-translated chat-id :name name)}))
+            owner-id        (:owner-id command)
+            bot-db          (get bot-db chat-id)
             params          (input-model/args->params c)
             command-message {:command    command
                              :params     params
@@ -245,12 +253,12 @@
                              :created-at (time/now-ms)
                              :id         message-id
                              :chat-id    chat-id
-                             :jail-id    jail-id}
+                             :jail-id    (or owner-id jail-id)}
             request-data    {:message-id   message-id
                              :chat-id      chat-id
-                             :jail-id      jail-id
+                             :jail-id      (or owner-id jail-id)
                              :content      {:command (:name command)
-                                            :params  (assoc params :metadata metadata)
+                                            :params  (assoc params :metadata metadata :bot-db bot-db)
                                             :type    (:type command)}
                              :on-requested #(after command-message %)}]
         (dispatch [:request-command-data request-data data-type])))))
@@ -332,3 +340,48 @@
   (fn [{:keys [current-chat-id] :as db} [_ text chat-id]]
     (let [chat-id (or chat-id current-chat-id)]
       (assoc-in db [:chats chat-id :seq-argument-input-text] text))))
+
+(handlers/register-handler
+  :update-text-selection
+  (handlers/side-effect!
+    (fn [{:keys [current-chat-id] :as db} [_ selection]]
+      (let [input-text (get-in db [:chats current-chat-id :input-text])
+            command    (input-model/selected-chat-command db current-chat-id input-text)]
+        (when (and (= selection (+ (count const/command-char)
+                                   (count (get-in command [:command :name]))
+                                   (count const/spacing-char)))
+                   (get-in command [:command :sequential-params]))
+          (dispatch [:chat-input-focus :seq-input-ref]))
+        (dispatch [:set-chat-ui-props {:selection selection}])
+        (dispatch [:load-chat-parameter-box (:command command)])))))
+
+(handlers/register-handler
+  :select-prev-argument
+  (handlers/side-effect!
+    (fn [{:keys [chat-ui-props current-chat-id] :as db} _]
+      (let [arg-pos (input-model/argument-position db current-chat-id)]
+        (when (pos? arg-pos)
+          (let [input-text (get-in db [:chats current-chat-id :input-text])
+                new-sel    (->> (input-model/split-command-args input-text)
+                                (take (inc arg-pos))
+                                (input-model/join-command-args)
+                                (count))
+                ref        (get-in chat-ui-props [current-chat-id :input-ref])]
+            (.setNativeProps ref (clj->js {:selection {:start new-sel :end new-sel}}))
+            (dispatch [:update-text-selection new-sel])))))))
+
+(handlers/register-handler
+  :select-next-argument
+  (handlers/side-effect!
+    (fn [{:keys [chat-ui-props current-chat-id] :as db} _]
+      (let [arg-pos (input-model/argument-position db current-chat-id)]
+        (let [input-text   (get-in db [:chats current-chat-id :input-text])
+              command-args (cond-> (input-model/split-command-args input-text)
+                                   (input-model/text-ends-with-space? input-text) (conj ""))
+              new-sel      (->> command-args
+                                (take (+ 3 arg-pos))
+                                (input-model/join-command-args)
+                                (count))
+              ref          (get-in chat-ui-props [current-chat-id :input-ref])]
+          (.setNativeProps ref (clj->js {:selection {:start new-sel :end new-sel}}))
+          (dispatch [:update-text-selection new-sel]))))))

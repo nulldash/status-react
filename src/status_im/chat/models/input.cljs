@@ -15,14 +15,18 @@
        (dec (count text)))))
 
 (defn possible-chat-actions [{:keys [global-commands] :as db} chat-id]
-  (let [{:keys [requests]} (get-in db [:chats chat-id])
-        {:keys [commands responses]} (get-in db [:contacts chat-id])
-
-        commands'  (into {} (map (fn [[k v]] [k [v :any]]) (merge global-commands commands)))
-        responses' (into {} (map (fn [{:keys [message-id type]}]
-                                   [type [(get responses type) message-id]])
-                                 requests))]
-    (vals (merge commands' responses'))))
+  (let [{:keys [contacts requests]} (get-in db [:chats chat-id])]
+    (->> contacts
+         (map (fn [{:keys [identity]}]
+                (let [{:keys [commands responses]} (get-in db [:contacts identity])]
+                  (let [commands'  (mapv (fn [[k v]] [k [v :any]]) (merge global-commands commands))
+                        responses' (mapv (fn [{:keys [message-id type]}]
+                                           [type [(get responses type) message-id]])
+                                         requests)]
+                    (into commands' responses')))))
+         (reduce (fn [m cur] (into (or m {}) cur)))
+         (into {})
+         (vals))))
 
 (defn split-command-args [command-text]
   (let [space?       (text-ends-with-space? command-text)
@@ -80,27 +84,31 @@
   ([{:keys [current-chat-id] :as db} chat-id]
    (selected-chat-command db chat-id (get-in db [:chats chat-id :input-text]))))
 
+(def *no-argument-error* -1)
+
 (defn current-chat-argument-position
-  [{:keys [args] :as command} input-text seq-arguments]
+  [{:keys [args sequential-params] :as command} input-text selection seq-arguments]
   (if command
-    (let [args-count (count args)]
-      (cond
-        (:sequential-params command)
-        (count seq-arguments)
-
-        (= (last input-text) const/spacing-char)
-        args-count
-
-        :default
-        (dec args-count)))
-    -1))
+    (if sequential-params
+      (count seq-arguments)
+      (let [subs-input-text (subs input-text 0 selection)]
+        (if subs-input-text
+          (let [args             (split-command-args subs-input-text)
+                argument-index   (dec (count args))
+                ends-with-space? (text-ends-with-space? subs-input-text)]
+            (if ends-with-space?
+              argument-index
+              (dec argument-index)))
+          *no-argument-error*)))
+    *no-argument-error*))
 
 (defn argument-position [{:keys [current-chat-id] :as db} chat-id]
   (let [chat-id       (or chat-id current-chat-id)
         input-text    (get-in db [:chats chat-id :input-text])
         seq-arguments (get-in db [:chats chat-id :seq-arguments])
+        selection     (get-in db [:chat-ui-props chat-id :selection])
         chat-command  (selected-chat-command db chat-id)]
-    (current-chat-argument-position chat-command input-text seq-arguments)))
+    (current-chat-argument-position chat-command input-text selection seq-arguments)))
 
 (defn command-completion
   ([{:keys [current-chat-id] :as db} chat-id]

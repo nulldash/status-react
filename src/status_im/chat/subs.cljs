@@ -92,9 +92,10 @@
   (fn [db]
     (let [command       (subscribe [:selected-chat-command])
           input-text    (subscribe [:chat :input-text])
-          seq-arguments (subscribe [:chat :seq-arguments])]
+          seq-arguments (subscribe [:chat :seq-arguments])
+          selection     (subscribe [:chat-ui-props :selection])]
       (reaction
-        (input-model/current-chat-argument-position @command @input-text @seq-arguments)))))
+        (input-model/current-chat-argument-position @command @input-text @selection @seq-arguments)))))
 
 (register-sub
   :chat-parameter-box
@@ -104,7 +105,7 @@
           index   (subscribe [:current-chat-argument-position])]
       (reaction
         (cond
-          (and @command (> @index -1))
+          (and @command (not= @index input-model/*no-argument-error*))
           (let [command-name (get-in @command [:command :name])]
             (get-in @db [:chats @chat-id :parameter-boxes command-name @index]))
 

@@ -16,26 +16,22 @@
             [status-im.utils.random :as random]
             [status-im.chat.sign-up :as sign-up]
             [status-im.bots.constants :as bots-constants]
-            [status-im.utils.datetime :as time]))
-
+            [status-im.utils.datetime :as time]
+            [clojure.string :as str]))
 
 (defn load-commands!
-  [{:keys [current-chat-id contacts]} [contact callback]]
-  (let [whole-contact? (map? contact)
-        {:keys [whisper-identity]} contact
-        identity'      (or whisper-identity contact current-chat-id)
-        contact'       (if whole-contact?
-                         contact
-                         (or (get contacts identity')
-                             sign-up/console-contact))]
-    (when identity'
-      (dispatch [::fetch-commands! {:contact  contact'
-                                    :callback callback}])))
-  ;; todo uncomment
-  #_(if-let [{:keys [file]} (commands/get-by-chat-id contact)]
-      (dispatch [::parse-commands! contact file])
-      (dispatch [::fetch-commands! contact])))
-
+  [{:keys [current-chat-id contacts chats]} [jail-id callback]]
+  (let [identity    (or jail-id current-chat-id)
+        contact-ids (if (get contacts identity)
+                      [identity]
+                      (->> (get-in chats [identity :contacts])
+                           (map :identity)
+                           (into [])))]
+    (when (seq contacts)
+      (doseq [contact-id contact-ids]
+        (when-let [contact (get contacts contact-id)]
+          (dispatch [::fetch-commands! {:contact  contact
+                                        :callback callback}]))))))
 
 (defn http-get-commands [params url]
   (http-get url
@@ -47,14 +43,18 @@
 
 
 (defn fetch-commands!
-  [_ [{{:keys [dapp? dapp-url bot-url whisper-identity]} :contact
-       :as                                               params}]]
-  (if
-    bot-url
+  [_ [{{:keys [whisper-identity
+               dapp-url
+               bot-url
+               dapp?]} :contact
+       :as             params}]]
+  (if bot-url
     (if-let [resource (js-res/get-resource bot-url)]
       (dispatch [::validate-hash params resource])
       (http-get-commands params bot-url))
-    (dispatch [::validate-hash params js-res/commands-js])))
+    (when-not dapp?
+      ;; TODO: this part should be removed in the future
+      (dispatch [::validate-hash params js-res/wallet-js]))))
 
 (defn dispatch-loaded!
   [db [{{:keys [whisper-identity]} :contact
@@ -95,21 +95,25 @@
              (get-hash-by-file file))]
     (assoc db ::valid-hash valid?)))
 
-(defn mark-as [as coll]
+(defn each-merge [coll with]
   (->> coll
-       (map (fn [[k v]] [k (assoc v :type as)]))
+       (map (fn [[k v]] [k (merge v with)]))
        (into {})))
 
-(defn filter-forbidden-names [account id commands]
+(defn filter-commands [account {:keys [contacts chat-id] :as chat} commands]
   (->> commands
        (remove (fn [[_ {:keys [registered-only name]}]]
                  (and (not (:address account))
                       (not= name "global")
                       registered-only)))
+       ;; TODO: this part should be removed because it's much better to provide the ability to do this in the API
+       (remove (fn [[_ {:keys [name]}]]
+                 (and (some #{name} ["send" "request"])
+                      (= chat-id wallet-chat-id))))
        (remove (fn [[n]]
-                 (and
-                   (not= console-chat-id id)
-                   (h/matches (name n) "password"))))
+                 (and (= (count contacts) 1)
+                      (not= console-chat-id (get (first contacts) :identity))
+                      (h/matches (name n) "password"))))
        (into {})))
 
 (defn get-mailmans-commands [db]
@@ -126,20 +130,24 @@
        (into {})))
 
 (defn add-commands
-  [db [id _ {:keys [commands responses subscriptions]}]]
+  [{:keys [chats] :as db} [id _ {:keys [commands responses subscriptions]}]]
   (let [account          @(subscribe [:get-current-account])
-        commands'        (filter-forbidden-names account id commands)
+        chat             (get chats id)
+        commands'        (filter-commands account chat commands)
+        responses'       (filter-commands account chat responses)
         global-command   (:global commands')
         commands''       (apply dissoc commands' [:init :global])
-        responses'       (filter-forbidden-names account id responses)
         mailman-commands (get-mailmans-commands db)]
     (cond-> db
 
             true
             (update-in [:contacts id] assoc
-                       :commands-loaded true
-                       :commands (mark-as :command (merge mailman-commands commands''))
-                       :responses (mark-as :response responses')
+                       :commands-loaded? true
+                       :commands (-> (merge mailman-commands commands'')
+                                     (each-merge {:type     :command
+                                                  :owner-id id}))
+                       :responses (each-merge responses' {:type     :response
+                                                          :owner-id id})
                        :subscriptions subscriptions)
 
             global-command
@@ -164,7 +172,7 @@
   [{:keys [global-commands contacts]} [id]]
   (let [command   (get global-commands (keyword id))
         commands  (get-in contacts [id :commands])
-        responses (get-in contacts [id :commands])]
+        responses (get-in contacts [id :responses])]
     (contacts/save {:whisper-identity id
                     :global-command   command
                     :commands         (vals commands)
@@ -184,7 +192,7 @@
 (reg-handler :check-and-load-commands!
   (u/side-effect!
     (fn [{:keys [contacts]} [identity callback]]
-      (if (get-in contacts [identity :commands-loaded])
+      (if (get-in contacts [identity :commands-loaded?])
         (callback)
         (dispatch [:load-commands! identity callback])))))
 

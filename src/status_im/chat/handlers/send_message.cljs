@@ -126,19 +126,20 @@
 
 (register-handler ::invoke-command-handlers!
   (u/side-effect!
-    (fn [db [_ {:keys [chat-id address command-message]
+    (fn [{:keys [bot-db] :as db} [_ {:keys [chat-id address command-message]
                 :as   parameters}]]
       (let [{:keys [id command params]} command-message
-            {:keys [type name bot]} command
+            {:keys [type name bot owner-id]} command
             path     [(if (= :command type) :commands :responses)
                       name
                       :handler]
             to       (get-in db [:contacts chat-id :address])
-            params   {:parameters params
+            identity (or owner-id bot chat-id)
+            bot-db   (get bot-db (or bot chat-id))
+            params   {:parameters (assoc params :bot-db bot-db)
                       :context    {:from       address
                                    :to         to
-                                   :message-id id}}
-            identity (or bot chat-id)]
+                                   :message-id id}}]
         (dispatch
           [:check-and-load-commands!
            identity
