@@ -1,7 +1,7 @@
 {
   "name": "StatusIm",
   "interface": "reagent",
-  "androidHost": "10.0.3.2",
+  "androidHost": "localhost",
   "modules": [
     "react-native-contacts",
     "react-native-invertible-scroll-view",
@@ -42,7 +42,8 @@
     "nfc-react-native",
     "react-native-http-bridge",
     "react-native-network-info",
-    "react-native-autogrow-textinput"
+    "react-native-autogrow-textinput",
+    "react-native-mapbox-gl"
   ],
   "imageDirs": [
     "images"
