@@ -128,8 +128,10 @@
                 args    (-> (get-in db [:chats current-chat-id :input-text])
                             (input-model/split-command-args)
                             (rest))
-                params  {:parameters {:args   args
-                                      :bot-db bot-db}
+                seq-arg (get-in db [:chats current-chat-id :seq-argument-input-text])
+                params  {:parameters {:args args
+                                      :bot-db bot-db
+                                      :seqArg seq-arg}
                          :context    (merge {:data data}
                                             (input-model/command-dependent-context-params command))}]
             (status/call-jail jail-id

@@ -40,6 +40,7 @@ Command.prototype.create = function (com) {
     this.request = com.request;
     this["execute-immediately?"] = com.executeImmediately;
     this["sequential-params"] = com.sequentialParams;
+    this["hide-send-button"] = com.hideSendButton;
     this.addToCatalog();
 
     return this;

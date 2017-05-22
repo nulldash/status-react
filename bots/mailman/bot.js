@@ -1,4 +1,4 @@
-status.command({
+/*status.command({
     name: "location",
     icon: "location",
     title: I18n.t('location_title'),
@@ -48,4 +48,4 @@ status.command({
             )
         };
     }
-});
+});*/

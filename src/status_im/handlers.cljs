@@ -197,6 +197,20 @@
         then
         else))))
 
+(register-handler :request-geolocation-update
+  (u/side-effect!
+    (fn [_ _]
+      (dispatch [:request-permissions [:geolocation]
+                 (fn [] (.getCurrentPosition
+                          navigator.geolocation
+                          #(dispatch [:update-geolocation (js->clj % :keywordize-keys true)])
+                          #(dispatch [:update-geolocation (js->clj % :keywordize-keys true)])
+                          (clj->js {:enableHighAccuracy true :timeout 20000 :maximumAge 1000})))]))))
+
+(register-handler :update-geolocation
+  (fn [db [_ geolocation]]
+    (assoc db :geolocation geolocation)))
+
 ;; -- User data --------------------------------------------------------------
 (register-handler :load-user-phone-number
   (fn [db [_]]
