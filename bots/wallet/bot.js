@@ -36,10 +36,21 @@ status.defineSubscription(
 )
 
 function amountParameterBox(params, context) {
-    var txData = {
-        to: params["bot-db"]["contact"]["address"],
-        value: web3.toWei(params.args[1]) || 0
-    };
+    var txData;
+    var amount;
+    try {
+        amount = params.args[1];
+        txData = {
+            to: params["bot-db"]["contact"]["address"],
+            value: web3.toWei(amount) || 0
+        };
+    } catch (err) {
+        amount = null;
+        txData = {
+            to: params["bot-db"]["contact"]["address"],
+            value: 0
+        };
+    }
 
     var sliderValue = params["bot-db"]["sliderValue"] || 5;
 
@@ -96,7 +107,7 @@ function amountParameterBox(params, context) {
                                             color: "black"
                                         }
                                     },
-                                    params.args[1] || "0.00"
+                                    amount || "0.00"
                                 ),
                                 status.components.text(
                                     {
@@ -398,24 +409,40 @@ var send = {
 status.command(send);
 status.response(send);
 
+var paramsRequest = [
+    {
+        name: "recipient",
+        type: status.types.TEXT,
+        suggestions: function (params) {
+            return {
+                title: I18n.t('request_title'),
+                markup: status.components.chooseContact(I18n.t('send_choose_recipient'), 0)
+            };
+        }
+    },
+    {
+        name: "amount",
+        type: status.types.NUMBER
+    }
+];
+
 status.command({
     name: "request",
     color: "#5fc48d",
     title: I18n.t('request_title'),
     description: I18n.t('request_description'),
-    sequentialParams: true,
-    params: [{
-        name: "amount",
-        type: status.types.NUMBER
-    }],
+    params: paramsRequest,
     handler: function (params) {
+        var val = web3.toWei(params["amount"].replace(",", "."), "ether");
+
         return {
             event: "request",
-            params: [params.amount],
+            params: [params["bot-db"]["contact"]["address"], val],
             request: {
                 command: "send",
                 params: {
-                    amount: params.amount
+                    recipient: params["bot-db"]["contact"]["address"],
+                    amount: val
                 }
             }
         };
@@ -441,16 +468,30 @@ status.command({
         };
     },
     validator: function (params) {
-        try {
-            var val = web3.toWei(params.amount.replace(",", "."), "ether");
-            if (val <= 0) {
-                throw new Error();
-            }
-        } catch (err) {
+        if (!params["bot-db"]["contact"]["address"]) {
+            return {
+                markup: status.components.validationMessage(
+                    "Wrong address",
+                    "Recipient address must be specified"
+                )
+            };
+        }
+        if (!params["amount"]) {
             return {
                 markup: status.components.validationMessage(
                     I18n.t('validation_title'),
-                    I18n.t('validation_invalid_number')
+                    I18n.t('validation_amount_specified')
+                )
+            };
+        }
+
+        var amount = params.amount.replace(",", ".");
+        var amountSplitted = amount.split(".");
+        if (amountSplitted.length === 2 && amountSplitted[1].length > 18) {
+            return {
+                markup: status.components.validationMessage(
+                    I18n.t('validation_title'),
+                    I18n.t('validation_amount_is_too_small')
                 )
             };
         }
