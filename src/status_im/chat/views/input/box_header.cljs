@@ -11,7 +11,10 @@
 (defn get-header [type]
   (fn []
     (let [parameter-box (subscribe [:chat-parameter-box])
-          result-box    (subscribe [:chat-ui-props :result-box])]
+          result-box    (subscribe [:chat-ui-props :result-box])
+          chat-id       (subscribe [:get-current-chat-id])
+          command       (subscribe [:selected-chat-command])
+          index         (subscribe [:current-chat-argument-position])]
       (fn []
         (let [{:keys [showBack title]} (if (= type :parameter-box)
                                          @parameter-box
@@ -19,13 +22,18 @@
           [view {:style style/header-container}
            [view style/header-title-container
             (when showBack
-              [touchable-highlight {:on-press #(dispatch [:select-argument 2])}
+              [touchable-highlight {:on-press #(dispatch [:select-prev-argument])}
                [view style/header-back-container
                 [icon :back_dark style/header-close-icon]]])
             [text {:style           (style/header-title-text showBack)
                    :number-of-lines 1
                    :font            :medium}
              title]
-            [touchable-highlight {:on-press #(dispatch [:set-chat-ui-props {:result-box nil}])}
+            [touchable-highlight
+             {:on-press (fn []
+                          (if (= type :parameter-box)
+                            (let [command-name (get-in @command [:command :name])]
+                              (dispatch [:set-in [:chats @chat-id :parameter-boxes command-name @index] nil]))
+                            (dispatch [:set-chat-ui-props {:result-box nil}])))}
              [view style/header-close-container
               [icon :close_light_gray style/header-close-icon]]]]])))))

@@ -17,7 +17,8 @@
       [contact-view {:contact  contact
                      :on-press #(do (dispatch [:set-command-argument [arg-index name true]])
                                     (dispatch [:set-in-bot-db {:path  [:contact]
-                                                               :value contact}]))}])))
+                                                               :value contact}])
+                                    (dispatch [:select-next-argument]))}])))
 
 (defview choose-contact-view [{title     :title
                                arg-index :index}]

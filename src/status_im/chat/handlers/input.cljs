@@ -80,7 +80,9 @@
             (dispatch [:set-chat-input-text (str command-name
                                                  const/spacing-char
                                                  (input-model/join-command-args command-args)
-                                                 (when move-to-next? const/spacing-char))])))))))
+                                                 (when (and move-to-next?
+                                                            (= index (dec (count command-args))))
+                                                   const/spacing-char))])))))))
 
 (handlers/register-handler
   :chat-input-focus
@@ -349,16 +351,33 @@
         (dispatch [:load-chat-parameter-box (:command command)])))))
 
 (handlers/register-handler
-  :select-argument
+  :select-prev-argument
   (handlers/side-effect!
     (fn [{:keys [chat-ui-props current-chat-id] :as db} _]
-      (let [arg-pos (dec (input-model/argument-position db current-chat-id))]
-        (when (>= arg-pos 0)
+      (let [arg-pos (input-model/argument-position db current-chat-id)]
+        (when (> arg-pos 0)
           (let [input-text (get-in db [:chats current-chat-id :input-text])
                 new-sel    (->> (input-model/split-command-args input-text)
-                                (take (+ 2 arg-pos))
+                                (take (+ 1 arg-pos))
                                 (input-model/join-command-args)
                                 (count))
                 ref        (get-in chat-ui-props [current-chat-id :input-ref])]
             (.setNativeProps ref (clj->js {:selection {:start new-sel :end new-sel}}))
             (dispatch [:update-text-selection new-sel])))))))
+
+(handlers/register-handler
+  :select-next-argument
+  (handlers/side-effect!
+    (fn [{:keys [chat-ui-props current-chat-id] :as db} _]
+      (let [arg-pos (input-model/argument-position db current-chat-id)]
+        (let [input-text   (get-in db [:chats current-chat-id :input-text])
+              command-args (cond-> (input-model/split-command-args input-text)
+                                   (input-model/text-ends-with-space? input-text) (conj ""))
+              _ (log/debug "ALWX command-args" input-text command-args arg-pos)
+              new-sel      (->> command-args
+                                (take (+ 3 arg-pos))
+                                (input-model/join-command-args)
+                                (count))
+              ref          (get-in chat-ui-props [current-chat-id :input-ref])]
+          (.setNativeProps ref (clj->js {:selection {:start new-sel :end new-sel}}))
+          (dispatch [:update-text-selection new-sel]))))))
