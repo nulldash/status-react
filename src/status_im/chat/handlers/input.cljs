@@ -356,16 +356,23 @@
   :select-prev-argument
   (handlers/side-effect!
     (fn [{:keys [chat-ui-props current-chat-id] :as db} _]
-      (let [arg-pos (input-model/argument-position db current-chat-id)]
-        (when (> arg-pos 0)
-          (let [input-text (get-in db [:chats current-chat-id :input-text])
-                new-sel    (->> (input-model/split-command-args input-text)
-                                (take (+ 1 arg-pos))
-                                (input-model/join-command-args)
-                                (count))
-                ref        (get-in chat-ui-props [current-chat-id :input-ref])]
-            (.setNativeProps ref (clj->js {:selection {:start new-sel :end new-sel}}))
-            (dispatch [:update-text-selection new-sel])))))))
+      (let [input-text (get-in db [:chats current-chat-id :input-text])
+            command    (input-model/selected-chat-command db current-chat-id input-text)]
+        (if (get-in command [:command :sequential-params])
+          (do
+            (dispatch [:set-command-argument [0 "" false]])
+            (dispatch [:set-chat-seq-arg-input-text ""])
+            (dispatch [:load-chat-parameter-box (:command command)]))
+          (let [arg-pos (input-model/argument-position db current-chat-id)]
+            (when (> arg-pos 0)
+              (let [input-text (get-in db [:chats current-chat-id :input-text])
+                    new-sel    (->> (input-model/split-command-args input-text)
+                                    (take (+ 1 arg-pos))
+                                    (input-model/join-command-args)
+                                    (count))
+                    ref        (get-in chat-ui-props [current-chat-id :input-ref])]
+                (.setNativeProps ref (clj->js {:selection {:start new-sel :end new-sel}}))
+                (dispatch [:update-text-selection new-sel])))))))))
 
 (handlers/register-handler
   :select-next-argument

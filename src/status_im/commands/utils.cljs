@@ -12,7 +12,7 @@
             [status-im.chat.views.input.web-view :as chat-web-view]
             [status-im.chat.views.input.validation-messages :as chat-validation-messages]
             [status-im.chat.views.choosers.choose-contact :as choose-contact]
-            [status-im.chat.views.geolocation.current-location :as current-location]
+            [status-im.chat.views.geolocation.views :as geolocation]
             [re-frame.core :refer [dispatch trim-v debug]]
             [status-im.utils.handlers :refer [register-handler]]
             [taoensso.timbre :as log]))
@@ -37,10 +37,11 @@
    :bridged-web-view     chat-web-view/bridged-web-view
    :validation-message   chat-validation-messages/validation-message
    :choose-contact       choose-contact/choose-contact-view
-   :current-location-map current-location/current-location-map-view
-   :current-location     current-location/current-location-view
-   :places-nearby        current-location/places-nearby-view
-   :places-search        current-location/places-search})
+   :current-location-map geolocation/current-location-map-view
+   :current-location     geolocation/current-location-view
+   :places-nearby        geolocation/places-nearby-view
+   :places-search        geolocation/places-search
+   :dropped-pin          geolocation/dropped-pin})
 
 (defn get-element [n]
   (elements (keyword (.toLowerCase n))))

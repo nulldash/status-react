@@ -1,15 +1,44 @@
-/*status.command({
+function locationsSuggestions (params) {
+    var result = {title: "Send location"};
+    var seqArg = params.seqArg ? params.seqArg : "";
+
+    if (seqArg == "Dropped pin")
+    {
+        result.showBack = true;
+        result.markup = ["view", {},
+                            ['dropped-pin']];
+    }
+    else if (seqArg != "")
+    {
+        result.showBack = true;
+        result.markup = ['scroll-view', {keyboardShouldPersistTaps: "always"},
+                            ['view', {},
+                                ['places-search']]];
+    }
+    else
+    {
+        result.markup = ['scroll-view', {keyboardShouldPersistTaps: "always"},
+                            ['view', {},
+                                ['current-location-map'],
+                                ['current-location'],
+                                ['separator'],
+                                ['places-nearby']]];
+    }
+
+    return result;
+}
+
+status.command({
     name: "location",
-    icon: "location",
     title: I18n.t('location_title'),
     description: I18n.t('location_description'),
-    color: "#a187d5",
     sequentialParams: true,
-    registeredOnly: true,
+    hideSendButton: true,
     params: [{
         name: "address",
         type: status.types.TEXT,
-        placeholder: I18n.t('location_address')
+        placeholder: I18n.t('location_address'),
+        suggestions: locationsSuggestions
     }],
     preview: function (params) {
         var text = status.components.text(
@@ -32,8 +61,9 @@
             {
                 source: {uri: uri},
                 style: {
-                    width: 100,
-                    height: 100
+                    borderRadius: 5
+                    marginTop: 12
+                    height:    58
                 }
             }
         );
@@ -48,4 +78,4 @@
             )
         };
     }
-});*/
+});

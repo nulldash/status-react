@@ -207,6 +207,12 @@
    :chat-send-eth-to                      "{{amount}} ETH to {{chat-name}}"
    :chat-send-eth-from                    "{{amount}} ETH from {{chat-name}}"
 
+   ;location command
+   :your-current-location                 "Your current location"
+   :places-nearby                         "Places nearby"
+   :search-results                        "Search results"
+   :dropped-pin                           "Dropped pin"
+
    ;new-group
    :group-chat-name                       "Chat name"
    :empty-group-chat-name                 "Please enter a name"

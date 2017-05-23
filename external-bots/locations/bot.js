@@ -173,10 +173,13 @@ function locationsSuggestions (params) {
 
     if (seqArg == "Dropped pin")
     {
-        result.markup = ["view", {}, ["text", {}, "Dropped pin" + seqArg]];
+        result.showBack = true;
+        result.markup = ["view", {},
+                            ['dropped-pin']];
     }
     else if (seqArg != "")
     {
+        result.showBack = true;
         result.markup = ['scroll-view', {keyboardShouldPersistTaps: "always"},
                             ['view', {},
                                 ['places-search']]];
