@@ -39,7 +39,8 @@
    :choose-contact       choose-contact/choose-contact-view
    :current-location-map current-location/current-location-map-view
    :current-location     current-location/current-location-view
-   :places-nearby        current-location/places-nearby-view})
+   :places-nearby        current-location/places-nearby-view
+   :places-search        current-location/places-search})
 
 (defn get-element [n]
   (elements (keyword (.toLowerCase n))))

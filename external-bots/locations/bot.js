@@ -177,7 +177,9 @@ function locationsSuggestions (params) {
     }
     else if (seqArg != "")
     {
-        result.markup = ["view", {}, ["text", {}, "Let's try to find something " + seqArg]];
+        result.markup = ['scroll-view', {keyboardShouldPersistTaps: "always"},
+                            ['view', {},
+                                ['places-search']]];
     }
     else
     {
@@ -194,10 +196,8 @@ function locationsSuggestions (params) {
 
 status.command({
     name: "location",
-    icon: "location",
     title: I18n.t('location_title'),
     description: I18n.t('location_description'),
-    color: "#a187d5",
     sequentialParams: true,
     hideSendButton: true,
     params: [{
