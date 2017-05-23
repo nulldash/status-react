@@ -48,6 +48,9 @@
 
 (def separator
   {:height           1
-   :margin-left      22
    :opacity          0.5
    :background-color "#c1c7cbb7"})
+
+(def item-separator
+  (merge separator
+         {:margin-left 22}))

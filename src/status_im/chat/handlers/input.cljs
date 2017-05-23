@@ -95,6 +95,16 @@
           (log/debug "Cannot focus the reference"))))))
 
 (handlers/register-handler
+  :chat-input-blur
+  (handlers/side-effect!
+    (fn [{:keys [current-chat-id chat-ui-props] :as db} [_ ref]]
+      (try
+        (when-let [ref (get-in chat-ui-props [current-chat-id ref])]
+          (.blur ref))
+        (catch :default e
+          (log/debug "Cannot blur the reference"))))))
+
+(handlers/register-handler
   :update-suggestions
   (fn [{:keys [current-chat-id] :as db} [_ chat-id text]]
     (let [chat-id         (or chat-id current-chat-id)
@@ -362,7 +372,8 @@
           (do
             (dispatch [:set-command-argument [0 "" false]])
             (dispatch [:set-chat-seq-arg-input-text ""])
-            (dispatch [:load-chat-parameter-box (:command command)]))
+            (dispatch [:load-chat-parameter-box (:command command)])
+            (dispatch [:chat-input-focus :seq-input-ref]))
           (let [arg-pos (input-model/argument-position db current-chat-id)]
             (when (> arg-pos 0)
               (let [input-text (get-in db [:chats current-chat-id :input-text])

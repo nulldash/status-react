@@ -174,6 +174,7 @@ function locationsSuggestions (params) {
     if (seqArg == "Dropped pin")
     {
         result.showBack = true;
+        result.height = "max";
         result.markup = ["view", {},
                             ['dropped-pin']];
     }

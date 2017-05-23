@@ -46,16 +46,20 @@
   [view
    (if geolocation
      [view
-      [touchable-highlight {:on-press #(do
-                                         (dispatch [:set-command-argument [0 "Dropped pin" false]])
-                                         (dispatch [:set-chat-seq-arg-input-text "Dropped pin"])
-                                         (dispatch [:load-chat-parameter-box (:command command)]))}
-       [view
-        [mapview {:initial-center-coordinate (select-keys (:coords geolocation) [:latitude :longitude])
-                  :showsUserLocation true
-                  :initialZoomLevel 10
-                  :logoIsHidden true
-                  :style st/map-view}]]]]
+      [mapview {:onTap #(do
+                          (dispatch [:set-command-argument [0 "Dropped pin" false]])
+                          (dispatch [:set-chat-seq-arg-input-text "Dropped pin"])
+                          (dispatch [:chat-input-blur :seq-input-ref])
+                          (dispatch [:load-chat-parameter-box (:command command)]))
+                :initialCenterCoordinate (select-keys (:coords geolocation) [:latitude :longitude])
+                :showsUserLocation true
+                :initialZoomLevel 10
+                :logoIsHidden true
+                :rotateEnabled false
+                :scrollEnabled false
+                :zoomEnabled false
+                :pitchEnabled false
+                :style st/map-view}]]
      [view st/map-activity-indicator-container
       [components/activity-indicator {:animating true}]])])
 
@@ -95,7 +99,7 @@
                          [view
                           [place-item text place_name]
                           (when (not= feature (last (:features @cur-loc-geocoded)))
-                            [view st/separator])])
+                            [view st/item-separator])])
                        (:features @cur-loc-geocoded)))])))})))
 
 (defn places-search []
@@ -119,26 +123,42 @@
                       [view
                        [place-item place_name nil]
                        (when (not= feature (last (:features @places)))
-                         [view st/separator])])
+                         [view st/item-separator])])
                     (:features @places)))]))))))
 
 (defn dropped-pin []
   (let [geolocation     @(subscribe [:get :geolocation])
         pin-location    (r/atom nil)
-        pin-geplocation (r/atom nil)
-        result          (reaction (when @pin-location (get-places @pin-location pin-geplocation)))]
+        pin-geolocation (r/atom nil)
+        pin-nearby      (r/atom nil)
+        result          (reaction (when @pin-location (get-places @pin-location pin-geolocation)))
+        result2         (reaction (when @pin-location (get-places @pin-location pin-nearby true)))]
     (fn []
       (dispatch [:set-in [:debug :pin-location] @pin-location])
-      (let [_ @result]
+      (let [_ @result _ @result2]
         [view
          [mapview {:initial-center-coordinate (select-keys (:coords geolocation) [:latitude :longitude])
                    :initialZoomLevel 10
                    :onRegionDidChange #(reset! pin-location (js->clj % :keywordize-keys true))
                    :logoIsHidden true
                    :style {:height 265}}]
-         (when (and @pin-geplocation (> (count (:features @pin-geplocation)) 0))
+         (when (and @pin-geolocation (> (count (:features @pin-geolocation)) 0))
+           [view
+            [view st/location-container
+             [text {:style st/location-container-title}
+              (label :t/dropped-pin)]
+             (let [{:keys [place_name] :as feature} (get-in @pin-geolocation [:features 0])]
+               [place-item place_name nil])]
+            [view st/separator]])
+         (when (and @pin-nearby (> (count (:features @pin-nearby)) 0))
            [view st/location-container
             [text {:style st/location-container-title}
-             (label :t/dropped-pin)]
-            (let [{:keys [place_name] :as feature} (get-in @pin-geplocation [:features 0])]
-              [place-item place_name nil])])]))))
+             (label :t/places-nearby)]
+            (doall
+              (map (fn [{:keys [text place_name] :as feature}]
+                     ^{:key feature}
+                     [view
+                      [place-item text place_name]
+                      (when (not= feature (last (:features @pin-nearby)))
+                        [view st/item-separator])])
+                   (:features @pin-nearby)))])]))))
