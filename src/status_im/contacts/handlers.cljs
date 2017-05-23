@@ -244,25 +244,25 @@
                                  default-groups)])
         (doseq [[id {:keys [name photo-path public-key add-chat? global-command
                             dapp? dapp-url dapp-hash bot-url unremovable?]}] default-contacts]
-          (let [id' (clojure.core/name id)]
+          (let [id' (clojure.core/name id)
+                contact
+                {:whisper-identity id'
+                 :address          (public-key->address id')
+                 :name             (:en name)
+                 :photo-path       photo-path
+                 :public-key       public-key
+                 :unremovable?     (boolean unremovable?)
+                 :dapp?            dapp?
+                 :dapp-url         (:en dapp-url)
+                 :bot-url          bot-url
+                 :global-command   global-command
+                 :dapp-hash        dapp-hash}]
             (when-not (get contacts id')
               (when add-chat?
                 (dispatch [:add-chat id' {:name (:en name)}]))
-              (let [contact
-                    {:whisper-identity id'
-                     :address          (public-key->address id')
-                     :name             (:en name)
-                     :photo-path       photo-path
-                     :public-key       public-key
-                     :unremovable?     (boolean unremovable?)
-                     :dapp?            dapp?
-                     :dapp-url         (:en dapp-url)
-                     :bot-url          bot-url
-                     :global-command   global-command
-                     :dapp-hash        dapp-hash}]
-                (dispatch [:add-contacts [contact]])
-                (when bot-url
-                  (dispatch [:load-commands! contact]))))))))))
+              (dispatch [:add-contacts [contact]]))
+            (when bot-url
+              (dispatch [:load-commands! contact]))))))))
 
 
 (register-handler :add-contacts
