@@ -56,7 +56,6 @@
                   :initialCenterCoordinate coord
                   :showsUserLocation true
                   :initialZoomLevel 10
-                  :attributionButtonIsHidden true
                   :logoIsHidden true
                   :rotateEnabled false
                   :scrollEnabled false
@@ -143,27 +142,12 @@
           [mapview {:initial-center-coordinate (select-keys (:coords geolocation) [:latitude :longitude])
                     :initialZoomLevel 10
                     :onRegionDidChange #(reset! pin-location (js->clj % :keywordize-keys true))
-                    :attributionButtonIsHidden true
                     :logoIsHidden true
                     :style {:height 265}}]
-          [view {:position :absolute
-                 :top 0
-                 :right 0
-                 :bottom 0
-                 :left 0
-                 :justify-content :center
-                 :align-items :center
-                 :pointer-events :none}
-           [view {:align-items :center}
-            [view {:border-color  "#000000"
-                   :background-color "#FFFFFF"
-                   :border-width  3
-                   :border-radius 7
-                   :height        13
-                   :width         13}]
-            [view {:height 7
-                   :width 2
-                   :background-color  "#000000"}]]]]
+          [view st/pin-container
+           [view st/pin-component
+            [view st/pin-circle]
+            [view st/pin-leg]]]]
          (when (and @pin-geolocation (> (count (:features @pin-geolocation)) 0))
            [view
             [view st/location-container

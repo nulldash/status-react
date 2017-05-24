@@ -1,4 +1,5 @@
-(ns status-im.chat.views.geolocation.styles)
+(ns status-im.chat.views.geolocation.styles
+  (:require [status-im.components.styles :as common]))
 
 (defn place-item-container [address]
   {:height          (if address 74 52)
@@ -9,7 +10,7 @@
    :align-items    :center})
 
 (defn place-item-circle-icon [pin-style]
-  (merge {:border-color  "#628fe3"
+  (merge {:border-color  common/color-light-blue
           :border-width  3
           :border-radius 7
           :height        13
@@ -17,20 +18,20 @@
          pin-style))
 
 (def black-pin
-  {:border-color  "#000000"})
+  {:border-color  common/color-black})
 
 (def place-item-title
   {:font-size     15
    :padding-left  9
    :padding-right 16
-   :color         "#000000"
+   :color         common/color-black
    :line-height   23})
 
 (def place-item-address
   {:font-size     15
    :padding-left  22
    :padding-right 16
-   :color         "#000000"
+   :color         common/color-black
    :line-height   23})
 
 (def map-activity-indicator-container
@@ -47,7 +48,7 @@
 
 (def location-container-title
   {:font-size      14
-   :color          "#939ba1"
+   :color          common/color-gray4
    :letter-spacing -0.2})
 
 (def location-container-title-count
@@ -62,3 +63,29 @@
 (def item-separator
   (merge separator
          {:margin-left 22}))
+
+(def pin-container
+  {:position        :absolute
+   :top             0
+   :right           0
+   :bottom          0
+   :left            0
+   :justify-content :center
+   :align-items     :center
+   :pointer-events  :none})
+
+(def pin-component
+  {:align-items :center})
+
+(def pin-circle
+  {:border-color     common/color-black
+   :background-color common/color-white
+   :border-width     3
+   :border-radius    7
+   :height           13
+   :width            13})
+
+(def pin-leg
+  {:height            7
+   :width             2
+   :background-color  common/color-black})

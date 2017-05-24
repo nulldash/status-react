@@ -214,9 +214,10 @@ status.command({
         var text = status.components.text(
             {
                 style: {
-                    marginTop: 5,
+                    marginTop: 0,
                     marginHorizontal: 0,
-                    fontSize: 14,
+                    fontSize: 15,
+                    lineHeight: 23,
                     fontFamily: "font",
                     color: "black"
                 }
@@ -224,7 +225,6 @@ status.command({
         var uri = "https://maps.googleapis.com/maps/api/staticmap?center="
             + params.address
             + "&size=100x100&maptype=roadmap&key=AIzaSyBNsj1qoQEYPb3IllmWMAscuXW0eeuYqAA&language=en"
-            + "&markers=size:mid%7Ccolor:0xff0000%7Clabel:%7C"
             + params.address;
 
         var image = status.components.image(
@@ -238,7 +238,23 @@ status.command({
             }
         );
 
-        return {markup: status.components.view({}, [text, image])};
+        return {markup: ['view', {},
+                            text,
+                            ['view', {},
+                                image,
+                                ['view', {style: {position: "absolute",
+                                                  top: 0,
+                                                  right: 0,
+                                                  bottom: 0,
+                                                  left: 0,
+                                                  justifyContent: "center",
+                                                  alignItems: "center"}},
+                                    ['view', {style: {borderColor:  "#628fe3",
+                                                      backgroundColor: "#FFFFFF",
+                                                      borderWidth:  4,
+                                                      borderRadius: 8,
+                                                      height:       15,
+                                                      width:        15}}]]]]};
     },
     shortPreview: function (params) {
         return {
