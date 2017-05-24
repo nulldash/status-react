@@ -8,12 +8,16 @@
   {:flex-direction :row
    :align-items    :center})
 
-(def place-item-circle-icon
-  {:border-color  "#628fe3"
-   :border-width  3
-   :border-radius 7
-   :height        13
-   :width         13})
+(defn place-item-circle-icon [pin-style]
+  (merge {:border-color  "#628fe3"
+          :border-width  3
+          :border-radius 7
+          :height        13
+          :width         13}
+         pin-style))
+
+(def black-pin
+  {:border-color  "#000000"})
 
 (def place-item-title
   {:font-size     15
@@ -45,6 +49,10 @@
   {:font-size      14
    :color          "#939ba1"
    :letter-spacing -0.2})
+
+(def location-container-title-count
+  (merge location-container-title
+         {:opacity 0.5}))
 
 (def separator
   {:height           1

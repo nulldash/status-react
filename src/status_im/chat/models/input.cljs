@@ -83,17 +83,18 @@
 (defn current-chat-argument-position
   [{:keys [args sequential-params] :as command} input-text selection seq-arguments]
   (if command
-    (if sequential-params
-      (count seq-arguments)
-      (let [subs-input-text (subs input-text 0 selection)]
-        (if subs-input-text
-          (let [args             (split-command-args subs-input-text)
-                argument-index   (dec (count args))
-                ends-with-space? (text-ends-with-space? subs-input-text)]
-            (if ends-with-space?
-              argument-index
-              (dec argument-index)))
-          -1)))
+    (let [{:keys [sequential-params]} (:command command)]
+      (if sequential-params
+        (count seq-arguments)
+        (let [subs-input-text (subs input-text 0 selection)]
+          (if subs-input-text
+            (let [args             (split-command-args subs-input-text)
+                  argument-index   (dec (count args))
+                  ends-with-space? (text-ends-with-space? subs-input-text)]
+              (if ends-with-space?
+                argument-index
+                (dec argument-index)))
+            -1))))
     -1))
 
 (defn argument-position [{:keys [current-chat-id] :as db} chat-id]

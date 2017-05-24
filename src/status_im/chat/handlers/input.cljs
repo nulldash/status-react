@@ -372,8 +372,7 @@
           (do
             (dispatch [:set-command-argument [0 "" false]])
             (dispatch [:set-chat-seq-arg-input-text ""])
-            (dispatch [:load-chat-parameter-box (:command command)])
-            (dispatch [:chat-input-focus :seq-input-ref]))
+            (dispatch [:load-chat-parameter-box (:command command)]))
           (let [arg-pos (input-model/argument-position db current-chat-id)]
             (when (> arg-pos 0)
               (let [input-text (get-in db [:chats current-chat-id :input-text])
