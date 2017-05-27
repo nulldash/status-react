@@ -12,7 +12,7 @@
   (handlers/side-effect!
     (fn [{:keys [contacts current-account-id] :as db}
          [_ {{:keys [command params content-command type]} :content
-             :keys [message-id chat-id on-requested jail-id] :as message} data-type]]
+             :keys                                         [message-id chat-id on-requested jail-id] :as message} data-type]]
       (let [jail-id (or jail-id chat-id)]
         (if-not (get-in contacts [jail-id :commands-loaded])
           (do (dispatch [:add-commands-loading-callback
@@ -34,7 +34,12 @@
                                          result)]
                             (dispatch [:set-in [:message-data data-type message-id] result])
                             (when on-requested (on-requested result)))]
-            (status/call-jail jail-id path params callback)))))))
+            ;chat-id path params callback lock? type
+            (status/call-jail {:jail-id  jail-id
+                               :path     path
+                               :params   params
+                               :callback callback
+                               :type     data-type})))))))
 
 (handlers/register-handler :execute-command-immediately
   (handlers/side-effect!

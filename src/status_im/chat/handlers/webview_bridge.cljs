@@ -135,11 +135,13 @@
             parameters {:context    context
                         :parameters {:amount  amount
                                      :address address}}]
-        (s/call-jail c/wallet-chat-id
-                     path
-                     parameters
-                     (fn [data]
-                       (log/debug :webview-send-eth-callback data)))))))
+        (s/call-jail
+          {:jail-id  c/wallet-chat-id
+           :path     path
+           :params   parameters
+           :callback (fn [data]
+                       (log/debug :webview-send-eth-callback data))
+           :type     :send})))))
 
 (register-handler :webview-nfc
   (u/side-effect!

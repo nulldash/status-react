@@ -8,7 +8,8 @@
             [cljs.core.async :refer [<! timeout]]
             [status-im.utils.js-resources :as js-res]
             [status-im.i18n :as i]
-            [status-im.utils.platform :as p]))
+            [status-im.utils.platform :as p]
+            [status-im.utils.scheduler :as scheduler]))
 
 (defn cljs->json [data]
   (.stringify js/JSON (clj->js data)))
@@ -135,34 +136,62 @@
   (when status
     (call-module #(.parseJail status chat-id file callback))))
 
-(defn call-jail [chat-id path params callback]
-  (when status
-    (call-module
-      #(do
-         (log/debug :call-jail :chat-id chat-id)
-         (log/debug :call-jail :path path)
-         (log/debug :call-jail :params params)
-         (let [params' (update params :context assoc
-                               :debug js/goog.DEBUG
-                               :locale i/i18n.locale)
-               cb      (fn [r]
-                         (let [{:keys [result] :as r'} (t/json->clj r)
-                               {:keys [messages]} result]
-                           (log/debug r')
-                           (doseq [{:keys [type message]} messages]
-                             (log/debug (str "VM console(" type ") - " message)))
-                           (callback r')))]
-           (.callJail status chat-id (cljs->json path) (cljs->json params') cb))))))
+(defonce jails (atom {}))
+
+;; todo call this method on "transaction.queued" signal
+(defn unlock-jail! [chat-id]
+  (swap! jails assoc-in [chat-id :locked?] false))
+
+(defn unlock-jail-by-key!
+  "Unlock jail if lock-key is valid."
+  [chat-id lock-key]
+  (swap! jails update chat-id
+         (fn [jail]
+           (if (= lock-key (:lock-key jail))
+             {:locked? false}
+             jail))))
+
+(defn lock-jail! [chat-id]
+  (let [lock-key (rand-int 10000)]
+    (swap! jails update chat-id merge {:locked?  true
+                                       :lock-key lock-key})
+    ;; unlock jail 1 seconds later
+    (scheduler/execute-later
+      #(unlock-jail-by-key! chat-id lock-key)
+      (scheduler/s->ms 1))))
+
+(defn call-jail [{:keys [jail-id path params callback type]}]
+  (when-not (get @jails [jail-id :locked?])
+    (when status
+      (when (= type :handler)
+        (lock-jail! jail-id))
+      (call-module
+        #(do
+           (log/debug :call-jail :jail-id jail-id)
+           (log/debug :call-jail :path path)
+           (log/debug :call-jail :params params)
+           (let [params' (update params :context assoc
+                                 :debug js/goog.DEBUG
+                                 :locale i/i18n.locale)
+                 cb      (fn [r]
+                           (let [{:keys [result] :as r'} (t/json->clj r)
+                                 {:keys [messages]} result]
+                             (log/debug r')
+                             (doseq [{:keys [type message]} messages]
+                               (log/debug (str "VM console(" type ") - " message)))
+                             (callback r')))]
+             (.callJail status jail-id (cljs->json path) (cljs->json params') cb)))))))
 
 (defn call-function!
   [{:keys [chat-id function callback] :as opts}]
   (let [path   [:functions function]
         params (select-keys opts [:parameters :context])]
     (call-jail
-      chat-id
-      path
-      params
-      (or callback #(dispatch [:received-bot-response {:chat-id chat-id} %])))))
+      {:jail-id  chat-id
+       :path     path
+       :params   params
+       :callback (or callback #(dispatch [:received-bot-response {:chat-id chat-id} %]))
+       :type     path})))
 
 (defn set-soft-input-mode [mode]
   (when status

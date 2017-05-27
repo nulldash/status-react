@@ -141,7 +141,7 @@ class StatusModule extends ReactContextBaseJavaModule implements LifecycleEventL
         }
 
         String config;
-        String defaultConfig = Statusgo.GenerateConfig(dataFolder, 3);
+        String defaultConfig = Statusgo.GenerateConfig(dataFolder, 3, 1);
         try {
             JSONObject jsonConfig = new JSONObject(defaultConfig);
             String gethLogFileName = "geth.log";
