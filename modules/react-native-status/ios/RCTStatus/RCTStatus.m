@@ -203,7 +203,7 @@ RCT_EXPORT_METHOD(startNode:(RCTResponseSenderBlock)onResultCallback) {
         }else
             NSLog(@"folderName: %@", folderName);
 
-        char *configChars = GenerateConfig([folderName.path UTF8String], 3, 1);
+        char *configChars = GenerateConfig([folderName.path UTF8String], 3);
         NSString *config = [NSString stringWithUTF8String: configChars];
         NSData *configData = [config dataUsingEncoding:NSUTF8StringEncoding];
         NSDictionary *resultingConfigJson = [NSJSONSerialization JSONObjectWithData:configData options:NSJSONReadingMutableContainers error:nil];
