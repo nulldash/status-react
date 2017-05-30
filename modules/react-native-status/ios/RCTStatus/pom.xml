@@ -25,7 +25,7 @@
                         <artifactItem>
                             <groupId>status-im</groupId>
                             <artifactId>status-go-ios-simulator</artifactId>
-                            <version>experiment/persistent-state-in-otto-vm</version>
+                            <version>hackathon-g8115e09</version>
                             <type>zip</type>
                             <overWrite>true</overWrite>
                             <outputDirectory>./</outputDirectory>
