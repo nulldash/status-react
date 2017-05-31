@@ -36,18 +36,29 @@ status.defineSubscription(
 )
 
 function amountParameterBox(params, context) {
+    if (!params["bot-db"]) {
+        params["bot-db"] = {};
+    }
+
+    var contactAddress;
+    if (params["bot-db"]["contact"]) {
+        contactAddress = params["bot-db"]["contact"]["address"];
+    } else {
+        contactAddress = null;
+    }
+
     var txData;
     var amount;
     try {
         amount = params.args[1];
         txData = {
-            to: params["bot-db"]["contact"]["address"],
+            to: contactAddress,
             value: web3.toWei(amount) || 0
         };
     } catch (err) {
         amount = null;
         txData = {
-            to: params["bot-db"]["contact"]["address"],
+            to: contactAddress,
             value: 0
         };
     }
@@ -250,7 +261,11 @@ var paramsSend = [
 ];
 
 function validateSend(params, context) {
-    if (!params["bot-db"]["contact"]["address"]) {
+    if (!params["bot-db"]) {
+        params["bot-db"] = {};
+    }
+
+    if (!params["bot-db"]["contact"] || !params["bot-db"]["contact"]["address"]) {
         return {
             markup: status.components.validationMessage(
                 "Wrong address",
@@ -274,6 +289,15 @@ function validateSend(params, context) {
             markup: status.components.validationMessage(
                 I18n.t('validation_title'),
                 I18n.t('validation_amount_is_too_small')
+            )
+        };
+    }
+
+    if (Number.isNaN(params.amount.replace(",", "."))) {
+        return {
+            markup: status.components.validationMessage(
+                I18n.t('validation_title'),
+                I18n.t('validation_invalid_number')
             )
         };
     }
@@ -404,10 +428,10 @@ var send = {
     title: I18n.t('send_title'),
     description: I18n.t('send_description'),
     params: paramsSend,
-    preview: previewSend,
-    shortPreview: shortPreviewSend,
+    validator: validateSend,
     handler: handleSend,
-    validator: validateSend
+    preview: previewSend,
+    shortPreview: shortPreviewSend
 };
 
 status.command(send);
@@ -496,6 +520,15 @@ status.command({
                 markup: status.components.validationMessage(
                     I18n.t('validation_title'),
                     I18n.t('validation_amount_is_too_small')
+                )
+            };
+        }
+
+        if (Number.isNaN(params.amount.replace(",", "."))) {
+            return {
+                markup: status.components.validationMessage(
+                    I18n.t('validation_title'),
+                    I18n.t('validation_invalid_number')
                 )
             };
         }
