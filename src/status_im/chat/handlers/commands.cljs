@@ -11,8 +11,11 @@
 (handlers/register-handler :request-command-data
   (handlers/side-effect!
     (fn [{:keys [contacts current-account-id] :as db}
-         [_ {{:keys [command params content-command type]} :content
-             :keys                                         [message-id chat-id on-requested jail-id] :as message} data-type]]
+         [_ {{:keys [command params content-command type]}
+             :content
+
+             :keys
+             [message-id chat-id on-requested jail-id] :as message} data-type]]
       (let [jail-id (or jail-id chat-id)]
         (if-not (get-in contacts [jail-id :commands-loaded])
           (do (dispatch [:add-commands-loading-callback
@@ -50,3 +53,11 @@
                    [:read-external-storage]
                    #(dispatch [:initialize-geth])])
         (log/debug "ignoring command: " command)))))
+
+
+(handlers/register-handler :request-command-preview
+  (handlers/side-effect!
+    (fn [db [_ {:keys [message-id] :as message}]]
+      (let [previews (get-in db [:message-data :preview])]
+        (when-not (contains? previews message-id)
+          (dispatch [:request-command-data message :preview]))))))
