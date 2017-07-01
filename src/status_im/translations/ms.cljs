@@ -7,7 +7,7 @@
    :not-implemented                       "!tidak diimplementasikan"
    :chat-name                             "Nama perbualan"
    :notifications-title                   "Pemberitahuan dan bunyi"
-   :offline                               "Offline"
+   :offline                               "Luar talian"
    :search-for                            "Cari..."
    :cancel                                "Batal"
    :next                                  "Seterusnya"
@@ -37,7 +37,7 @@
                                            :other "{{count}} ahli"
                                            :zero  "tiada ahli"}
    :public-group-status                   "Umum"
-   :active-online                         "Online"
+   :active-online                         "Dalam talian"
    :active-unknown                        "Tidak diketahui"
    :available                             "Ada"
    :no-messages                           "Tiada mesej"
@@ -76,10 +76,10 @@
 
    ;profile
    :profile                               "Profail"
-   :edit-profile                          "Ubah profile"
+   :edit-profile                          "Ubah profail"
    :report-user                           "LAPOR PENGGUNA"
    :message                               "Mesej"
-   :username                              "Nmam pengguna"
+   :username                              "Nama pengguna"
    :not-specified                         "Tidak diberikan"
    :public-key                            "Public key"
    :phone-number                          "Nombor telefon"
@@ -88,7 +88,7 @@
    :add-a-status                          "Tambah pada status..."
    :status-prompt                         "Ciptakan satu status untuk membantu pengguna lain mengetahui tentang perkara yang anda tawarkan. Anda juga boleh menggunakan #hashtag. "
    :add-to-contacts                       "Tambah pada senarai kenalan"
-   :in-contacts                           "Dalam senarai kenalan"
+   :in-contacts                           "Di dalam senarai kenalan"
    :remove-from-contacts                  "Buang dari senarai kenalan"
    :start-conversation                    "Mulakan perbualan"
    :send-transaction                      "Hantar transaksi"
@@ -107,9 +107,9 @@
    :sharing-share                         "Kongsi..."
    :sharing-cancel                        "Batal"
 
-   :browsing-title                        "Browse"
-   :browsing-browse                       "@browse"
-   :browsing-open-in-web-browser          "Buka dalam browser web"
+   :browsing-title                        "Pelayar"
+   :browsing-browse                       "@layar"
+   :browsing-open-in-web-browser          "Buka dalam pelayar web"
    :browsing-cancel                       "Batal"
 
    ;sign-up
@@ -128,7 +128,7 @@
    :intro-message1                        "Selamat datang ke Status\nSentuh mesej ini untuk menetapkan kata lalaun & memulakan!"
    :account-generation-message            "Beri saya sedikit masa, saya perlu menyelesaikan masalah matematik yang rumit untuk menciptakan akaun anda!"
    :move-to-internal-failure-message      "Kita perlu mengubah lokasi sedikit fail penting dari memori dalaman ke memori luaran. Untuk itu, kami perlukan kebenaran anda. Kami tidak akan menggunakan memori luaran pada versi akan datang."
-   :debug-enabled                         "Debug server telah dijalankan! Sekarang anda boleh menjalankan *status-dev-cli scan* untuk mecari sambunagan server dari komputer anda dalam jaringan yang sama."
+   :debug-enabled                         "Debug server telah dijalankan! Sekarang anda boleh menjalankan *status-dev-cli scan* untuk mecari sambungan server dari komputer anda dalam jaringan yang sama."
 
    ;phone types
    :phone-e164                            "International 1"
@@ -149,7 +149,7 @@
    :public-group-topic                    "Topik"
 
    ;discover
-   :discover                              "Temui"
+   :discover                              "Jelajah"
    :none                                  "Tiada"
    :search-tags                           "Taip carian anda disini"
    :popular-tags                          "Popular"
@@ -165,14 +165,14 @@
    :new-contact                           "Kenalan baru"
    :delete-contact                        "Padam kenalan"
    :delete-contact-confirmation           "Kenalan ini akan dipadam dari senarai kenalan anda"
-   :remove-from-group                     "Buang dari kumpualan"
+   :remove-from-group                     "Buang dari kumpulan"
    :edit-contacts                         "Ubah kenalan"
    :search-contacts                       "Cari kenalan"
    :show-all                              "TUNJUK SEMUA"
    :contacts-group-dapps                  "ÐApps"
-   :contacts-group-people                 "Pegguna"
+   :contacts-group-people                 "Pengguna"
    :contacts-group-new-chat               "Mulakan perbualan baru"
-   :choose-from-contacts                  "Pilih dri kenalan"
+   :choose-from-contacts                  "Pilih dari kenalan"
    :no-contacts                           "Masih tiada kenalan"
    :show-qr                               "Tunjuk kod QR"
    :enter-address                         "Masukkan address"
@@ -184,7 +184,7 @@
    :delete                                "Padam"
    :change-color                          "Tukar warna"
    :clear-history                         "Padam sejarah perbualan"
-   :mute-notifications                    "Perberitahuan mod senyap"
+   :mute-notifications                    "Pemberitahuan senyap"
    :leave-chat                            "Tinggalkan perbualan"
    :delete-and-leave                      "Padam dan tinggalkan"
    :chat-settings                         "Aturan perbualan"
@@ -239,16 +239,16 @@
 
    ;new-contact
    :add-new-contact                       "Tambah kenalan baru"
-   :import-qr                             "Impot"
+   :import-qr                             "Impot kod QR"
    :scan-qr                               "Imbas kod QR"
    :swow-qr                               "Tunjuk kod QR"
    :name                                  "Nama"
-   :whisper-identity                      "Whisper Identity"
-   :address-explication                   "Mungkin disini sepatutnya tedapat sedikit teks menjelaskan apa itu address dan dimana untuk melihatnya"
+   :whisper-identity                      "Identiti Whisper"
+   :address-explication                   "Mungkin disini sepatutnya terdapat sedikit teks menjelaskan apa itu address dan dimana untuk melihatnya"
    :enter-valid-address                   "Sila masukkan address yang sah atau imbas satu kod QR"
-   :enter-valid-public-key                "Sila masukkan public key yang sah atau imbas satu kod QR"
+   :enter-valid-public-key                "Sila masukkan public key yang sah atau imbas kod QR"
    :contact-already-added                 "Kenalan telah ditambah"
-   :can-not-add-yourself                  "Anda tidak boleh menbah diri anda sendiri"
+   :can-not-add-yourself                  "Anda tidak boleh menambah diri anda sendiri"
    :unknown-address                       "Address tidak diketahui"
 
 
@@ -256,14 +256,14 @@
    :connect                               "Sambung"
    :address                               "Address"
    :password                              "Kata laluan"
-   :login                                 "Log masuk"
-   :sign-in-to-status                     "Sign in ke Status"
-   :sign-in                               "Sign in"
+   :login                                 "Daftar masuk"
+   :sign-in-to-status                     "Daftar masuk ke Status"
+   :sign-in                               "Daftar masuk"
    :wrong-password                        "Kata laluan salah"
 
    ;recover
    :recover-from-passphrase               "Pulihkn akaun daripada ayat pengesahan"
-   :recover-explain                       "Sila masukkan ayat pengesahan kepada kata laluan anda untuk memulihkan akse ke akaun anda"
+   :recover-explain                       "Sila masukkan ayat pengesahan kepada kata laluan anda untuk memulihkan akses ke akaun anda"
    :passphrase                            "Ayat pengesahan"
    :recover                               "Pulihkan"
    :enter-valid-passphrase                "Sila masukkan ayat pengesahan"
